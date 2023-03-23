@@ -52,7 +52,7 @@ public class PlayerScript : MonoBehaviour
     {
         MovePlayer();
         AnimationHandler();
-        PlayerRotationHandler();
+        PlayerRotationHandler();    
     }
 
     private void PlayerRotationHandler()
@@ -67,7 +67,7 @@ public class PlayerScript : MonoBehaviour
         {
             Quaternion lookAtRotation = Quaternion.LookRotation(positionToLookAt);
             transform.rotation = (Quaternion.Slerp(currentRotation, lookAtRotation, rotationVelocity));
-        }
+        }  
     }
 
     private void AnimationHandler()
