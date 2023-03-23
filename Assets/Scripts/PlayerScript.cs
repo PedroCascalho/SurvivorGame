@@ -66,7 +66,7 @@ public class PlayerScript : MonoBehaviour
         if (isMoving)
         {
             Quaternion lookAtRotation = Quaternion.LookRotation(positionToLookAt);
-            transform.rotation = (Quaternion.Slerp(currentRotation, lookAtRotation, rotationVelocity));
+            transform.rotation = (Quaternion.Slerp(currentRotation, lookAtRotation, rotationVelocity * Time.deltaTime));
         }
     }
 
