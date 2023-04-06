@@ -9,12 +9,19 @@ public class PlayerScript : MonoBehaviour
     private CharacterController characterController;
     private Animator animator;
 
+    private int a_isWalking;
+    private int a_isRunning;
+
     private Vector2 playerMovementInput;
     private Vector3 playerMovement;
-    private bool isMoving;
+    private Vector3 playerRunMovement;
+    private bool isMovimentPressed;
     private float rotationVelocity = 5.0f;
 
+    private bool isRunningPressed;
+
     [SerializeField] private float velocity;
+    [SerializeField] private float runMultipleVelocity = 3;
 
 
     private void Awake()
@@ -22,11 +29,21 @@ public class PlayerScript : MonoBehaviour
         playerInput = new PlayerInput();
         characterController = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        GetAnimatorParameters();
 
         playerInput.Movement.Walk.started += OnMovementInput;
         playerInput.Movement.Walk.canceled += OnMovementInput;
         playerInput.Movement.Walk.performed += OnMovementInput;
 
+        playerInput.Movement.Run.started += OnRunningInput;
+        playerInput.Movement.Run.canceled += OnRunningInput;
+
+    }
+
+    void GetAnimatorParameters()
+    {
+        a_isWalking = Animator.StringToHash("isWalking");
+        a_isRunning = Animator.StringToHash("isRunning");
     }
 
     private void OnMovementInput(InputAction.CallbackContext context)
@@ -35,16 +52,14 @@ public class PlayerScript : MonoBehaviour
         playerMovement.x = playerMovementInput.x;
         playerMovement.y = 0.0f;
         playerMovement.z = playerMovementInput.y;
-        isMoving = playerMovementInput.y != 0 || playerMovementInput.x != 0;
-        //isMoving = playerMovementInput.y != 0 || playerMovementInput.x != 0 ? true : false;
-        //if(playerMovementInput.y != 0 || playerMovementInput.x != 0)
-        //{
-        //    isMoving = true;
-        //}
-        //else
-        //{
-        //    isMoving = false;
-        //}
+        playerRunMovement.x = playerMovementInput.x * runMultipleVelocity;
+        playerRunMovement.z = playerMovementInput.y * runMultipleVelocity;
+        isMovimentPressed = playerMovementInput.y != 0 || playerMovementInput.x != 0;
+    }
+
+    void OnRunningInput(InputAction.CallbackContext context)
+    {
+        isRunningPressed = context.ReadValueAsButton();
     }
 
     // Update is called once per frame
@@ -63,7 +78,7 @@ public class PlayerScript : MonoBehaviour
         positionToLookAt.z = playerMovement.z;
         Quaternion currentRotation = transform.rotation;
 
-        if (isMoving)
+        if (isMovimentPressed)
         {
             Quaternion lookAtRotation = Quaternion.LookRotation(positionToLookAt);
             transform.rotation = (Quaternion.Slerp(currentRotation, lookAtRotation, rotationVelocity * Time.deltaTime));
@@ -72,20 +87,40 @@ public class PlayerScript : MonoBehaviour
 
     private void AnimationHandler()
     {
-        if (animator.GetBool("isWalking") == false && isMoving == true)
+        bool isWalkingAnimation = animator.GetBool(a_isWalking);
+        bool isRunningAnimation = animator.GetBool(a_isRunning);
+
+        if (isMovimentPressed && !isWalkingAnimation)
         {
-            animator.SetBool("isWalking", true);
+            animator.SetBool(a_isWalking, true);
         }
 
-        if (animator.GetBool("isWalking") == true && isMoving == false)
+        else if (!isMovimentPressed && isWalkingAnimation)
         {
-            animator.SetBool("isWalking", false);
+            animator.SetBool(a_isWalking, false);
+        }
+
+        if (isMovimentPressed && isRunningPressed && !isRunningAnimation)
+        {
+            animator.SetBool(a_isRunning, true);
+        }
+
+        else if (!isMovimentPressed || !isRunningPressed && isRunningAnimation)
+        {
+            animator.SetBool(a_isRunning, false);
         }
     }
 
     private void MovePlayer()
     {
-        characterController.Move(playerMovement * Time.deltaTime * velocity);
+        if (isRunningPressed)
+        {
+            characterController.Move(playerRunMovement * Time.deltaTime * velocity);
+        }
+        else
+        {
+            characterController.Move(playerMovement * Time.deltaTime * velocity);
+        }
     }
 
     private void OnEnable()
